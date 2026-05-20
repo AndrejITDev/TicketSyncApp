@@ -7,8 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.15" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../TicketSync.Core/TicketSync.Core.csproj" />
-    <ProjectReference Include="../TicketSync.Data/TicketSync.Data.csproj" />
   </ItemGroup>
 
 </Project>

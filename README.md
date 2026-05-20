@@ -16,30 +16,31 @@ Eliminisati duplo unošenje tiketa - korisnici unose tiket samo u Jiru, a Ticket
 ## Tehnički Stek
 
 - **Backend**: C#, .NET 8
-- **Database**: MS SQL Server
-- **ORM**: Entity Framework Core 8
+- **Database**: MS SQL Server (Database First)
+- **ORM**: Dapper
 - **Razvojno okruženje**: Visual Studio Community 2022
 
 ## Arhitektura
 
-Projekt je organizovan u više slojeva:
+Projekt je organizovan u više slojeva sa Database First pristupom:
 
 ```
-├── TicketSync.Core          - Modeli i interfejsi
-├── TicketSync.Infrastructure - DbContext, Repositories, External Services
-├── TicketSync.Application   - Logika sinhronizacije
-├── TicketSync.Console       - Konzolna aplikacija
-└── TicketSync.Tests         - Jedinični testovi
+├── TicketSync.Core          - Modeli (POCO klase) i interfejsi
+├── TicketSync.Data         - Dapper Repositories
+├── TicketSync.Application  - Logika sinhronizacije
+├── TicketSync.Console      - Konzolna aplikacija
+├── TicketSync.Tests        - Jedinični testovi
+└── sql/migrations/         - SQL migracije (Database First)
 ```
 
 ## Faze Razvoja
 
-### ✅ FAZA 1: Osnovna struktura i inicijalizacija
+### ✅ FAZA 1: Osnovna struktura i inicijalizacija (Database First + Dapper)
 - Struktura projekta
-- Modeli podataka
-- Entity Framework Core DbContext
-- Repositories
-- Migracije baze podataka
+- POCO modeli podataka
+- Dapper Repositories (Specifični)
+- DapperContext
+- SQL migracije
 
 ### 📋 FAZA 2: Integracija sa Jira API
 - JiraService implementacija
@@ -66,48 +67,80 @@ Projekt je organizovan u više slojeva:
 
 ## Instalacija
 
-1. **Kloniranje projekta**
-   ```bash
-   git clone https://github.com/AndrejITDev/TicketSyncApp.git
-   cd TicketSyncApp
-   ```
+### 1. Kloniranje projekta
+```bash
+git clone https://github.com/AndrejITDev/TicketSyncApp.git
+cd TicketSyncApp
+```
 
-2. **Postavljanje baze podataka**
-   - Osiguraj se da je MS SQL Server dostupan
-   - Ažuriraj `appsettings.json` sa svojom connection stringom
+### 2. Postavljanje baze podataka
 
-3. **Primena migracija**
-   ```bash
-   dotnet ef database update --project src/TicketSync.Infrastructure --startup-project src/TicketSync.Console
-   ```
+#### Opcija A: Koristi SQL skriptu (preporučeno)
+```sql
+-- Otvori SQL Server Management Studio
+-- Kreiraj novu bazu pod nazivom 'TicketSync'
+-- Otvori i pokreni: sql/migrations/001_CreateInitialSchema.sql
+```
 
-4. **Pokretanje aplikacije**
-   ```bash
-   dotnet run --project src/TicketSync.Console
-   ```
+#### Opcija B: Automatski (kroz aplikaciju)
+```bash
+# Aplikacija će automatski kreirati tabele pri prvom pokretanju
+```
+
+### 3. Konfiguracija
+
+- Osiguraj se da je MS SQL Server dostupan
+- Ažuriraj `appsettings.json` ako je potrebna drugačija konekcija
+
+### 4. Pokretanje aplikacije
+
+```bash
+# Otvori solution u Visual Studio
+TicketSyncApp.sln
+
+# Ili iz komandne linije
+dotnet run --project src/TicketSync.Console
+```
 
 ## Struktura Baze Podataka
 
-### Tabela: TicketMappings
-Mapira Jira i ASEE_Live tikete
+### TicketMappings
+- Mapira Jira i ASEE_Live tikete
+- Prati status sinhronizacije
 
-### Tabela: SyncLogs
-Beleži sve sinhronizacije između sistema
+### SyncLogs
+- Belešava sve sinhronizacije između sistema
+- Prati greške i status operacija
 
-### Tabela: TicketFieldSnapshots
-Prati promene polja tiketa
+### TicketFieldSnapshots
+- Prati promene polja tiketa
+- Čuva stare i nove vrednosti
 
-### Tabela: SyncRetries
-Upravljanja ponovnim pokušajima pri greškama
+### SyncRetries
+- Upravljanja ponovnim pokušajima pri greškama
+- Prati broj pokušaja
 
-### Tabela: FieldMappingConfig
-Konfiguracija mapiranja polja između sistema
+### FieldMappingConfig
+- Konfiguracija mapiranja polja između sistema
+- Definiše transformacijska pravila
 
 ## Logovanje
 
 Aplikacija koristi Serilog za logovanje:
 - Console logovi
-- File logovi (logs/ticketsync-YYYY-MM-DD.txt)
+- File logovi (`logs/ticketsync-YYYY-MM-DD.txt`)
+- Različiti nivoi detaljnosti (Debug, Information, Warning, Error)
+
+## Struktura Repositories (Dapper)
+
+```csharp
+// Specifični repositories za svaku tabelu
+ITicketMappingRepository
+ISyncLogRepository
+ITicketFieldSnapshotRepository
+ISyncRetryRepository
+IFieldMappingConfigRepository
+```
 
 ## Kontakt
 

@@ -2,12 +2,12 @@ namespace TicketSync.Core.Models;
 
 public class JiraTicket
 {
-    public required string Key { get; set; }
-    public required string Id { get; set; }
-    public required string Summary { get; set; }
+    public string Key { get; set; } = string.Empty;
+    public string Id { get; set; } = string.Empty;
+    public string Summary { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public required string Status { get; set; }
-    public required string IssueType { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string IssueType { get; set; } = string.Empty;
     public string? Priority { get; set; }
     public string? Assignee { get; set; }
     public string? Reporter { get; set; }

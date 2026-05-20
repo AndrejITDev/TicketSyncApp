@@ -1,11 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using TicketSync.Core.Interfaces;
-using TicketSync.Infrastructure.Data;
-using TicketSync.Infrastructure.Repositories;
+using TicketSync.Data;
+using TicketSync.Data.Repositories;
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -35,37 +34,37 @@ try
         config.AddSerilog();
     });
     
-    // Add DbContext
-    var connectionString = configuration.GetConnectionString("DefaultConnection");
-    services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(connectionString, sqlOptions =>
-            sqlOptions.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)
-        )
-    );
+    // Add Dapper Context
+    var connectionString = configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found");
+    services.AddSingleton(new DapperContext(connectionString));
     
     // Add Repositories
     services.AddScoped<ITicketMappingRepository, TicketMappingRepository>();
     services.AddScoped<ISyncLogRepository, SyncLogRepository>();
-    services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+    services.AddScoped<ITicketFieldSnapshotRepository, TicketFieldSnapshotRepository>();
+    services.AddScoped<ISyncRetryRepository, SyncRetryRepository>();
+    services.AddScoped<IFieldMappingConfigRepository, FieldMappingConfigRepository>();
     
     var serviceProvider = services.BuildServiceProvider();
+    var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
     
-    // Apply migrations and create database
-    using (var scope = serviceProvider.CreateScope())
+    logger.LogInformation("Aplikacija je pokrenuta...");
+    logger.LogInformation("Connection string: {ConnectionString}", connectionString);
+    
+    // Test database connection
+    var dapperContext = serviceProvider.GetRequiredService<DapperContext>();
+    using (var connection = dapperContext.CreateConnection())
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        
-        logger.LogInformation("Primenjujem migracije baze podataka...");
-        await dbContext.Database.MigrateAsync();
-        logger.LogInformation("Migracije su uspešno primenjene.");
+        await connection.OpenAsync();
+        logger.LogInformation("✓ Konekcija sa bazom podataka je uspe??na!");
+        await connection.CloseAsync();
     }
     
     Console.WriteLine("\n===== TICKET SYNC APPLICATION =====");
-    Console.WriteLine("Baza podataka je uspešno inicijalizovana.");
-    Console.WriteLine("\nFAZA 1: Osnovna struktura - ZAVRŠENA ✓");
-    Console.WriteLine("\nDobrodošli u TicketSync aplikaciju!");
-    Console.WriteLine("Sledeća faza: Integracija sa Jira API");
+    Console.WriteLine("✓ Database First + Dapper + Specifični Repositories");
+    Console.WriteLine("\nFAZA 1: Osnovna struktura - ZAVR??ENA ✓");
+    Console.WriteLine("\nAplikacija je sprema za FAZU 2: Integracija sa Jira API");
     Console.WriteLine("\nPritisnite bilo koju tasterku za izlaz...");
     Console.ReadKey();
 }

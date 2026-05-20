@@ -3,10 +3,10 @@ namespace TicketSync.Core.Models;
 public class FieldMappingConfig
 {
     public int Id { get; set; }
-    public required string JiraFieldName { get; set; }
-    public required string AseeFieldName { get; set; }
-    public required string FieldType { get; set; } // TEXT, SELECT, DATE, etc.
-    public bool IsMappingRequired { get; set; } = false;
+    public string JiraFieldName { get; set; } = string.Empty;
+    public string AseeFieldName { get; set; } = string.Empty;
+    public string FieldType { get; set; } = string.Empty; // TEXT, SELECT, DATE, etc.
+    public bool IsMappingRequired { get; set; }
     public string? TransformationRule { get; set; } // JSON sa pravilima transformacije
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
 }
